@@ -9,7 +9,7 @@ class Emulator
 
   def run
     loop do
-      puts @home + ' >'
+      print @home + ' > '
       line = gets.chomp
       command, *args = line.split(' ')
       case  command 
@@ -17,35 +17,10 @@ class Emulator
         cd(*args)
       when 'ls'
         ls(*args)
-      when /mv .+/
-        arr = command.split
-        if arr[2] == nil
-          puts "mv: missing destination file operand after #{arr[1]}"
-        elsif !File.directory?(arr[1]) && !File.file?(arr[1])  
-          puts "mv: cannot move #{arr[1]}: No such file or directory"
-        elsif File.directory?(arr[1]) && File.file?(arr[2])   
-          puts "mv: cannot move #{arr[1]}: {arr[2]} is a file" 
-        elsif File.file?(arr[1]) && File.directory?(arr[2])
-          FileUtils::mv(arr[1], arr[2])
-        elsif File.file?(arr[1]) && File.file?(arr[2])
-          File.rename(arr[1], arr[2])
-        elsif File.file?(arr[1]) && !File.directory?(arr[2])
-          new_arr = arr[1].split('/')
-          new_arr2 = arr[2].split('/')
-          file = new_arr2.pop
-          from_path = new_arr.join('/')+'/'
-          FileUtils::mkdir_p(from_path)
-          if File.directory?(from_path)
-            FileUtils::mv(file, from_path)
-            next
-          end
-        elsif File.directory?(arr[1]) && !File.directory?(arr[2])
-          files = Dir[arr[1] + '/*']
-          FileUtils::mkdir_p(arr[2])
-          FileUtils::mv(files, arr[2])
-        elsif File.directory?(arr[1]) && File.directory?(arr[2])
-          FileUtils::mv(arr[1], arr[2]) 
-        end
+      when 'mv'
+        mv(*args)
+      when 'cp'
+        cp(*args)
       when 'exit'
         exit
       end
@@ -55,7 +30,7 @@ class Emulator
   def cd(path)
     if File.directory?(path)
       Dir.chdir(path)
-      puts @home = Dir.pwd
+      @home = Dir.pwd
     else
       puts "No such directory"
     end
@@ -77,9 +52,72 @@ class Emulator
         puts "No such file or directory" 
       end
     end
-    
+  end
+ 
+  def mv(from_path = nil, to_path = nil)
+    if to_path.nil?
+      puts "mv: missing destination file operand after #{from_path}"
+    elsif from_path.nil?
+      puts "mv: missing file operand"
+    elsif !File.directory?(from_path) && !File.file?(from_path)  
+      puts "mv: cannot move #{from_path}: No such file or directory"
+    elsif File.directory?(from_path) && File.file?(to_path)   
+      puts "mv: cannot move #{from_path}: #{to_path} is a file" 
+    elsif File.file?(from_path) && File.directory?(to_path)
+      FileUtils::mv(from_path, to_path)
+    elsif File.file?(from_path) && File.file?(to_path)
+      File.rename(from_path, to_path)
+    elsif File.directory?(from_path) && !Dir.exist?(to_path)
+      FileUtils::mkdir_p(to_path + '/')
+      files = Dir[from_path + '/*']
+      FileUtils::mv(files, to_path)
+    elsif File.directory?(from_path) && File.directory?(to_path)
+      files = Dir[from_path + '/*']
+      FileUtils::mv(files, to_path + '/') 
+    end
+  end
+
+  def cp(from_path = nil, to_path = nil)
+    if from_path.nil?
+      puts "cp: missing file operand "
+    elsif to_path.nil?
+      puts "cp: missing destination file operand after #{from path}"
+    elsif File.directory?(from_path) && File.file?(to_path)
+      puts "cp: cannot copy #{from_path}: #{to_path} is a file"
+    elsif !File.directory?(from_path) && !File.file(from_path)
+      puts "cp: cannot copy #{from path}: No such file or directory"
+    elsif File.file?(from_path) && File.directory?(to_path)
+      file = Dir[from_path]
+      FileUtils.cp(file, to_path)
+    elsif File.file?(from_path) && File.file?(to_path)
+      FileUtils.cp(from_path, to_path)
+      name_from = File.basename(from_path)
+      arr_of_pieces = to_path.split('/')
+      arr_of_pieces.pop
+      arr_of_pieces.push(name_from)
+      new_file_name = arr_of_pieces.join('/') 
+      File.rename(to_path, new_file_name )
+    elsif File.directory?(from_path) && File.directory?(to_path)
+      files = Dir[from_path + '/*']
+      if files.size > 1
+        files.each do |filename|
+        FileUtils.cp(filename, to_path)
+        end  
+      else
+        FileUtils.cp(from_path, to_path)
+      end
+    elsif File.directory?(from_path) && !Dir.exist?(to_path)
+      FileUtils::mkdir_p(to_path + '/')
+      files = Dir[from_path + '/*']
+      if files.size > 1
+        files.each do |filename| 
+        FileUtils.cp(filename, to_path)
+        end
+      else
+        FileUtils.cp(rom_path, to_path)
+      end
+    end 
   end
 end
 
 Emulator.new(ENV['HOME']).run
-
