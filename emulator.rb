@@ -23,6 +23,8 @@ class Emulator
         cp(*args)
       when 'rm'
         rm(*args)
+      when 'find'
+        find(*args)
       when 'exit'
         exit
       end
@@ -139,6 +141,29 @@ class Emulator
       end
     else 
       puts "rm: cannot remove #{path}: No such file or directory"
+    end
+  end
+
+  def find(path = nil)
+    if path.nil?
+      home_path = @home
+      while File.directory?(home_path)
+        puts str = Dir[home_path + '/*'].join('  ')
+        arr = home_path.split('/')
+        arr.pop
+        home_path = arr.join('/')
+      end
+    else
+      if File.directory?(path)
+        while File.directory?(path)
+          puts str = Dir[path + '/*'].join('  ')
+          arr = path.split('/')
+          arr.pop
+          path = arr.join('/')
+        end
+      else 
+        puts "find: cannot find #{path}: No such directory"
+      end
     end
   end
 end
