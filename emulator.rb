@@ -1,4 +1,6 @@
 require 'fileutils'
+require_relative 'commands/ls'
+require_relative 'commands/cd'
 
 class Emulator
   attr_accessor :home
@@ -14,9 +16,9 @@ class Emulator
       command, *args = line.split(' ')
       case  command 
       when 'cd'
-        cd(*args)
+       @home = Commands::Cd.new(@home, *args).perform 
       when 'ls'
-        ls(*args)
+        Commands::Ls.new(@home, *args).perform
       when 'mv'
         mv(*args)
       when 'cp'
@@ -144,16 +146,7 @@ class Emulator
     end
   end
 
-  def find(path = nil)
-    if path.nil?
-      home_path = @home
-      while File.directory?(home_path)
-        puts str = Dir[home_path + '/*'].join('  ')
-        arr = home_path.split('/')
-        arr.pop
-        home_path = arr.join('/')
-      end
-    else
+  def find(path = home)
       if File.directory?(path)
         while File.directory?(path)
           puts str = Dir[path + '/*'].join('  ')
@@ -164,7 +157,6 @@ class Emulator
       else 
         puts "find: cannot find #{path}: No such directory"
       end
-    end
   end
 end
 
