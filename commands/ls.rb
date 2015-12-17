@@ -10,6 +10,9 @@ module Commands
         str = Dir[@current_path + '/*'].join('  ')
         puts str.gsub(@current_path + '/', '')
       else
+        if File.directory?(@path) && !(Pathname.new @path).absolute?
+          @path = File.absolute_path(@path)
+        end
         if File.directory?(@path)
           Dir.chdir(@path)
           path_to_dir = Dir.pwd

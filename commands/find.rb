@@ -6,6 +6,9 @@ module Commands
     end
 
     def perform
+      if File.directory?(@path) && !(Pathname.new @path).absolute?
+        @path = File.absolute_path(@path)
+      end
       if File.directory?(@path)
         while File.directory?(@path)
           puts str = Dir[@path + '/*'].join('  ')
